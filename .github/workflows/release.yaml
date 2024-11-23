@@ -2,9 +2,9 @@ name: Create Release
 
 on:
   push:
-    tags: # Trigger when a new tag is pushed
-      - 'v*' # Matches tags like v1.0, v2.1.0, etc.
-  workflow_dispatch: # Allow manual triggering
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write # Required for creating releases
@@ -21,10 +21,20 @@ jobs:
       id: create_release
       uses: actions/create-release@v1
       with:
-        tag_name: ${{ github.ref_name }} # Use the tag that triggered the workflow
+        tag_name: ${{ github.ref_name }} # Tag name that triggered the workflow
         release_name: "Release ${{ github.ref_name }}" # Use the tag name as the release title
         body: |
           ## Changes in this release
           - Auto-generated release for version ${{ github.ref_name }}.
         draft: false
         prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Authenticate using the default token
+
+    - name: Upload Scripts Directory as Release Asset
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./PowerShell/Scripts/README.md
+        asset_name: README.md
+        asset_content_type: text/markdown
