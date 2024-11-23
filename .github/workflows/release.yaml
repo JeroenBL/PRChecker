@@ -1,13 +1,15 @@
 name: Create Release
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
 
 permissions:
-  contents: write # Required for creating releases
+  contents: write
 
 jobs:
   create-release:
@@ -17,16 +19,23 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Use Provided Version or Default Version
+      id: use_version
+      run: |
+        VERSION="${{ github.event.inputs.version }}"
+        echo "Using version: $VERSION"
+        echo "version=$VERSION" >> $GITHUB_ENV
+
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
       with:
-        tag_name: ${{ github.ref_name }} # Tag name that triggered the workflow
-        release_name: "Release ${{ github.ref_name }}" # Use the tag name as the release title
+        tag_name: ${{ env.version }}
+        release_name: ${{ env.version }}
         body: |
           ## Changes in this release
-          - Auto-generated release for version ${{ github.ref_name }}.
+          - Auto-generated release for version ${{ env.version }}.
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Authenticate using the default token
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
