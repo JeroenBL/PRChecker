@@ -41,15 +41,21 @@ jobs:
             exit 1
           fi
         fi
+
+        # Prepend 'v' if not already present
+        if [[ "$VERSION" != v* ]]; then
+          VERSION="v$VERSION"
+        fi
+
         echo "version=$VERSION" >> $GITHUB_ENV
 
     - name: Extract Release Notes from CHANGELOG.md
       id: extract_notes
       run: |
         if [ -f CHANGELOG.md ]; then
-          NOTES=$(awk '/## \['"${{ env.version }}"'\]/{flag=1; next} /## \[/{flag=0} flag' CHANGELOG.md)
+          NOTES=$(awk '/## \['"${{ env.version#v }}"'\]/{flag=1; next} /## \[/{flag=0} flag' CHANGELOG.md)
           if [ -z "$NOTES" ]; then
-            echo "No release notes found for version ${{ env.version }} in CHANGELOG.md."
+            echo "No release notes found for version ${{ env.version#v }} in CHANGELOG.md."
             exit 1
           fi
           echo "Release notes extracted."
