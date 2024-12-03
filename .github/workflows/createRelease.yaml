@@ -52,6 +52,7 @@ jobs:
 
     - name: Extract Release Notes from CHANGELOG.md
       id: extract_notes
+      if: ${{ github.event.inputs.version == '' }} # Skip if a version is provided as input
       run: |
         if [ -f CHANGELOG.md ]; then
           NOTES=$(awk '/## \['"${{ env.version_no_v }}"'\]/{flag=1; next} /## \[/{flag=0} flag' CHANGELOG.md)
@@ -66,10 +67,17 @@ jobs:
         fi
         echo "::set-output name=notes::$NOTES"
 
+    - name: Default Release Notes
+      id: default_notes
+      if: ${{ github.event.inputs.version != '' }} # Use default notes if a version is provided as input
+      run: |
+        echo "Release notes not provided; using default placeholder."
+        echo "::set-output name=notes::Release notes not provided for version ${{ env.version }}."
+
     - name: Debug Release Notes
       run: |
         echo "Extracted Release Notes:"
-        echo "${{ steps.extract_notes.outputs.notes }}"
+        echo "${{ steps.extract_notes.outputs.notes || steps.default_notes.outputs.notes }}"
 
     - name: Create GitHub Release
       id: create_release
@@ -77,7 +85,7 @@ jobs:
       with:
         tag_name: ${{ env.version }}
         release_name: ${{ env.version }}
-        body: ${{ steps.extract_notes.outputs.notes }}
+        body: ${{ steps.extract_notes.outputs.notes || steps.default_notes.outputs.notes }}
         draft: false
         prerelease: false
       env:
